@@ -179,6 +179,118 @@ app.post('/recipes/new', (req, res) => {
 		}
 	);
 });
+app.delete('/recipes/:id', (req, res) => {
+	// Delete
+	const { id } = req.params;
+	db.query(
+		'DELETE FROM recipe_categories WHERE recipe_id = ?',
+		id,
+		(err, results) => {
+			if (err) throw err;
+		}
+	);
+	db.query(
+		'DELETE FROM ingredients WHERE recipe_id = ?',
+		id,
+		(err, results) => {
+			if (err) throw err;
+		}
+	);
+	db.query(
+		'DELETE FROM instructions WHERE recipe_id = ?',
+		id,
+		(err, results) => {
+			if (err) throw err;
+		}
+	);
+	db.query('DELETE FROM recipes WHERE id = ?', [id], (err, results) => {
+		if (err) throw err;
+	});
+});
+app.put('/recipes/edit', (req, res) => {
+	// Update
+	const id = req.body.id;
+	console.log(req.body);
+	const q =
+		'UPDATE recipes SET recipeTitle = ?, servings = ?, img = ?, prepHr = ?, prepMin = ?, cookHr = ?, cookMin = ?, last_updated = now() where id = ?';
+	const recipeValues = [
+		req.body.recipeTitle,
+		req.body.servings,
+		req.body.img,
+		req.body.timing.prepHr,
+		req.body.timing.prepMin,
+		req.body.timing.cookHr,
+		req.body.timing.cookMin,
+	];
+	db.query(q, [...recipeValues, id], (err, results) => {
+		if (err) throw err;
+	});
+
+	// delete categories, ingredients and instructions
+	db.query(
+		'DELETE FROM recipe_categories WHERE recipe_id = ?',
+		id,
+		(err, results) => {
+			if (err) throw err;
+		}
+	);
+	db.query(
+		'DELETE FROM ingredients WHERE recipe_id = ?',
+		id,
+		(err, results) => {
+			if (err) throw err;
+		}
+	);
+	db.query(
+		'DELETE FROM instructions WHERE recipe_id = ?',
+		id,
+		(err, results) => {
+			if (err) throw err;
+		}
+	);
+
+	const categories = [];
+	req.body.category.map((cat) => {
+		categories.push([cat, id]);
+	});
+	const ingredients = [];
+	req.body.ingredients.map((ingre) => {
+		ingredients.push([
+			ingre.ingredient,
+			ingre.qty,
+			ingre.measure,
+			ingre.description,
+			id,
+		]);
+	});
+	const instructions = [];
+	req.body.instructions.map((inst) => {
+		instructions.push([inst, id]);
+	});
+
+	// add updated categories, ingredients and instructions
+	db.query(
+		'INSERT INTO recipe_categories (cat_id, recipe_id) VALUES ?',
+		[categories],
+		(err, results) => {
+			if (err) throw err;
+		}
+	);
+	db.query(
+		'INSERT INTO ingredients (ingredient, qty, measure, description, recipe_id) VALUES ?',
+		[ingredients],
+		(err, results) => {
+			if (err) throw err;
+		}
+	);
+	db.query(
+		'INSERT INTO instructions (instruction, recipe_id) VALUES ?',
+		[instructions],
+		(err, results) => {
+			if (err) throw err;
+		}
+	);
+});
 
 app.listen(3300, () => {
 	console.log('Backend up and running');
