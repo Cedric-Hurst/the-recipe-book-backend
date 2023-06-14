@@ -14,6 +14,7 @@ const db = mysql.createConnection({
 app.use(express.json());
 app.use(cors());
 
+// Recipes
 app.get('/recipes', (req, res) => {
 	// Read
 	let countRes = 0;
@@ -210,7 +211,6 @@ app.delete('/recipes/:id', (req, res) => {
 app.put('/recipes/edit', (req, res) => {
 	// Update
 	const id = req.body.id;
-	console.log(req.body);
 	const q =
 		'UPDATE recipes SET recipeTitle = ?, servings = ?, img = ?, prepHr = ?, prepMin = ?, cookHr = ?, cookMin = ?, last_updated = now() where id = ?';
 	const recipeValues = [
@@ -286,6 +286,53 @@ app.put('/recipes/edit', (req, res) => {
 	db.query(
 		'INSERT INTO instructions (instruction, recipe_id) VALUES ?',
 		[instructions],
+		(err, results) => {
+			if (err) throw err;
+		}
+	);
+});
+
+// Accounts
+app.get('/accounts', (req, res) => {
+	db.query('SELECT username, id FROM users', (err, results) => {
+		if (err) throw err;
+		res.json(results);
+	});
+});
+app.post('/accounts/new', (req, res) => {
+	db.query('SELECT username, email FROM users', (err, results) => {
+		if (err) throw err;
+		let addAccount = true;
+		results.map((user) => {
+			if (user.username.toLowerCase() === req.body.username.toLowerCase()) {
+				addAccount = false;
+			} else if (user.email.toLowerCase() === req.body.email.toLowerCase()) {
+				addAccount = false;
+				return res.json('Email already attached to an account');
+			}
+		});
+		const values = [req.body.username, req.body.email, req.body.password];
+		addAccount &&
+			db.query(
+				'INSERT INTO users (username, email, password) VALUES (?)',
+				[values],
+				(err, results) => {
+					if (err) throw err;
+				}
+			);
+	});
+});
+app.delete('/accounts/:id', (req, res) => {
+	const { id } = req.params;
+	db.query('DELETE FROM users WHERE id = ?', [id], (err, results) => {
+		if (err) throw err;
+	});
+});
+app.put('/accounts/:id', (req, res) => {
+	const { id } = req.params;
+	db.query(
+		'UPDATE users SET username = ?, email = ?, password = ? WHERE id = ?',
+		[values, id],
 		(err, results) => {
 			if (err) throw err;
 		}
