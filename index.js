@@ -1,6 +1,7 @@
 import express from 'express';
 import mysql from 'mysql2';
 import cors from 'cors';
+import bcrypt from 'bcrypt';
 import 'dotenv/config';
 
 const app = express();
@@ -294,12 +295,13 @@ app.put('/recipes/edit', (req, res) => {
 
 // Accounts
 app.get('/accounts', (req, res) => {
-	db.query('SELECT username, id FROM users', (err, results) => {
+	db.query('SELECT username, id, email FROM users', (err, results) => {
 		if (err) throw err;
 		res.json(results);
 	});
 });
 app.post('/accounts/new', (req, res) => {
+	const saltRounds = 12;
 	db.query('SELECT username, email FROM users', (err, results) => {
 		if (err) throw err;
 		let addAccount = true;
@@ -308,18 +310,27 @@ app.post('/accounts/new', (req, res) => {
 				addAccount = false;
 			} else if (user.email.toLowerCase() === req.body.email.toLowerCase()) {
 				addAccount = false;
-				return res.json('Email already attached to an account');
 			}
 		});
-		const values = [req.body.username, req.body.email, req.body.password];
-		addAccount &&
-			db.query(
-				'INSERT INTO users (username, email, password) VALUES (?)',
-				[values],
-				(err, results) => {
-					if (err) throw err;
-				}
-			);
+
+		bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
+			const values = [req.body.username, req.body.email, hash];
+			addAccount &&
+				db.query(
+					'INSERT INTO users (username, email, password) VALUES (?)',
+					[values],
+					(err, results) => {
+						if (err) throw err;
+						db.query(
+							'SELECT id FROM users WHERE username = ?',
+							[req.body.username],
+							(err, results) => {
+								return res.json(results[0].id);
+							}
+						);
+					}
+				);
+		});
 	});
 });
 app.delete('/accounts/:id', (req, res) => {
