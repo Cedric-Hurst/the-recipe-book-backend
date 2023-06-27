@@ -350,6 +350,25 @@ app.put('/accounts/:id', (req, res) => {
 	);
 });
 
+// LOGIN ... post request so i can send req.body using axios in client side
+app.post('/login', (req, res) => {
+	db.query(
+		'SELECT username, password, id FROM users WHERE username = ?',
+		[req.body.username],
+		(err, result) => {
+			if (err) throw err;
+			bcrypt.compare(
+				req.body.password, // incoming password
+				result[0].password, // database hashed password
+				function (error, result2) {
+					if (error) throw error;
+					// return to the client the result of the bcrypt compare
+					result2 ? res.json(result[0].id) : res.json(false);
+				}
+			);
+		}
+	);
+});
 app.listen(3300, () => {
 	console.log('Backend up and running');
 });
