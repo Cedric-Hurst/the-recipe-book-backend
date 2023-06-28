@@ -340,20 +340,23 @@ app.delete('/accounts/:id', (req, res) => {
 	});
 });
 app.put('/accounts/:id', (req, res) => {
+	const saltRounds = 12;
 	const { id } = req.params;
-	db.query(
-		'UPDATE users SET username = ?, email = ?, password = ? WHERE id = ?',
-		[values, id],
-		(err, results) => {
-			if (err) throw err;
-		}
-	);
+	bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
+		db.query(
+			'UPDATE users SET email = ?, password = ? WHERE id = ?',
+			[req.body.email, hash, id],
+			(err, results) => {
+				if (err) throw err;
+			}
+		);
+	});
 });
 
 // LOGIN ... post request so i can send req.body using axios in client side
 app.post('/login', (req, res) => {
 	db.query(
-		'SELECT username, password, id FROM users WHERE username = ?',
+		'SELECT * FROM users WHERE username = ?',
 		[req.body.username],
 		(err, result) => {
 			if (err) throw err;
@@ -362,8 +365,13 @@ app.post('/login', (req, res) => {
 				result[0].password, // database hashed password
 				function (error, result2) {
 					if (error) throw error;
+					const user = {
+						username: result[0].username,
+						id: result[0].id,
+						email: result[0].email,
+					};
 					// return to the client the result of the bcrypt compare
-					result2 ? res.json(result[0].id) : res.json(false);
+					result2 ? res.json(user) : res.json(false);
 				}
 			);
 		}
