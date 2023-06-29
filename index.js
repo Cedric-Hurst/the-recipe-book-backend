@@ -306,6 +306,7 @@ app.post('/accounts/new', (req, res) => {
 		if (err) throw err;
 		let addAccount = true;
 		results.map((user) => {
+			// redundant check
 			if (user.username.toLowerCase() === req.body.username.toLowerCase()) {
 				addAccount = false;
 			} else if (user.email.toLowerCase() === req.body.email.toLowerCase()) {
@@ -355,27 +356,52 @@ app.put('/accounts/:id', (req, res) => {
 
 // LOGIN ... post request so i can send req.body using axios in client side
 app.post('/login', (req, res) => {
-	db.query(
-		'SELECT * FROM users WHERE username = ?',
-		[req.body.username],
-		(err, result) => {
-			if (err) throw err;
-			bcrypt.compare(
-				req.body.password, // incoming password
-				result[0].password, // database hashed password
-				function (error, result2) {
-					if (error) throw error;
-					const user = {
-						username: result[0].username,
-						id: result[0].id,
-						email: result[0].email,
-					};
-					// return to the client the result of the bcrypt compare
-					result2 ? res.json(user) : res.json(false);
+	db.query('SELECT username FROM users', (err, results) => {
+		if (
+			results.filter((user) => user.username === req.body.username).length > 0 // check if Username exists
+		) {
+			db.query(
+				'SELECT * FROM users WHERE username = ?',
+				[req.body.username],
+				(err, result) => {
+					if (err) throw err;
+					bcrypt.compare(
+						req.body.password, // incoming password
+						result[0].password, // database hashed password
+						function (error, result2) {
+							if (error) throw error;
+							const user = {
+								username: result[0].username,
+								id: result[0].id,
+								email: result[0].email,
+							};
+							// return to the client the result of the bcrypt compare
+							result2 ? res.json(user) : res.json(false);
+						}
+					);
 				}
 			);
+		} else {
+			res.json(false);
 		}
-	);
+	});
+});
+// check username and email
+app.post('/checkuser', (req, res) => {
+	db.query('SELECT username, email FROM users', (err, results) => {
+		if (err) throw err;
+		if (req.body) {
+			results.map((user) => {
+				if (
+					req.body.username &&
+					user.username.toLowerCase() === req.body.username.toLowerCase()
+				) {
+					return res.send('Username is already in use');
+				} else if (req.body.email && user.email === req.body.email)
+					return res.send('Email already attached to an account');
+			});
+		}
+	});
 });
 app.listen(3300, () => {
 	console.log('Backend up and running');
