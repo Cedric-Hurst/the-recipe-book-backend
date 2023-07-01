@@ -358,7 +358,10 @@ app.put('/accounts/:id', (req, res) => {
 app.post('/login', (req, res) => {
 	db.query('SELECT username FROM users', (err, results) => {
 		if (
-			results.filter((user) => user.username === req.body.username).length > 0 // check if Username exists
+			results.filter(
+				(user) =>
+					user.username.toLowerCase() === req.body.username.toLowerCase()
+			).length > 0 // check if Username exists
 		) {
 			db.query(
 				'SELECT * FROM users WHERE username = ?',
