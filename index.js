@@ -121,7 +121,7 @@ app.post('/recipes/new', (req, res) => {
 		req.body.timing.prepMin,
 		req.body.timing.cookHr,
 		req.body.timing.cookMin,
-		1,
+		req.body.user_id,
 	];
 	db.query(
 		'INSERT INTO recipes (recipeTitle, servings, img, prepHr, prepMin, cookHr, cookMin, user_id) VALUES (?)',
