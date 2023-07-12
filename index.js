@@ -29,7 +29,7 @@ app.get('/recipes', (req, res) => {
 		results.map((i) => indexes.push(i.id));
 	});
 	const instructions = [];
-	db.query('select * from instructions', (err, results) => {
+	db.query('select * from instructions order by recipe_id', (err, results) => {
 		if (err) throw err;
 		for (let i = 0; i < countRes; i++) {
 			instructions.push([]);
@@ -45,7 +45,7 @@ app.get('/recipes', (req, res) => {
 		});
 	});
 	const ingredients = [];
-	db.query('select * from ingredients', (err, results) => {
+	db.query('select * from ingredients order by recipe_id', (err, results) => {
 		if (err) throw err;
 		for (let i = 0; i < countRes; i++) {
 			ingredients.push([]);
