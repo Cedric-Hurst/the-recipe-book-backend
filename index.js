@@ -406,6 +406,17 @@ app.post('/checkuser', (req, res) => {
 		}
 	});
 });
+// Searchbar
+app.get('/search', (req, res) => {
+	const { q } = req.query;
+	db.query(
+		`SELECT recipeTitle, id from recipes where recipeTitle LIKE '%${q}%'`,
+		(err, results) => {
+			if (err) throw err;
+			return res.send(results);
+		}
+	);
+});
 app.listen(3300, () => {
 	console.log('Backend up and running');
 });
