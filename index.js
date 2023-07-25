@@ -301,7 +301,7 @@ app.get('/accounts', (req, res) => {
 	});
 });
 app.post('/accounts/new', (req, res) => {
-	const saltRounds = 12;
+	const saltRounds = parseInt(process.env.DB_SALT);
 	db.query('SELECT username, email FROM users', (err, results) => {
 		if (err) throw err;
 		let addAccount = true;
@@ -341,7 +341,7 @@ app.delete('/accounts/:id', (req, res) => {
 	});
 });
 app.put('/accounts/:id', (req, res) => {
-	const saltRounds = 12;
+	const saltRounds = parseInt(process.env.DB_SALT);
 	const { id } = req.params;
 	bcrypt.hash(req.body.password, saltRounds, function (err, hash) {
 		db.query(
@@ -417,6 +417,7 @@ app.get('/search', (req, res) => {
 		}
 	);
 });
+// encrypt / decrypt cookie value
 app.get('/encrypt', (req, res) => {
 	const { q } = req.query;
 	return res.json(
@@ -431,6 +432,7 @@ app.get('/decrypt', (req, res) => {
 		)
 	);
 });
-app.listen(3300, () => {
+
+app.listen(process.env.PORT, () => {
 	console.log('Backend up and running');
 });
