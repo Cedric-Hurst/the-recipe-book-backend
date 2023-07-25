@@ -2,6 +2,7 @@ import express from 'express';
 import mysql from 'mysql2';
 import cors from 'cors';
 import bcrypt from 'bcrypt';
+import CryptoJS from 'crypto-js';
 import 'dotenv/config';
 
 const app = express();
@@ -128,7 +129,6 @@ app.post('/recipes/new', (req, res) => {
 		[recipeValues],
 		(err, results) => {
 			if (err) throw err;
-			console.log('recipe Added');
 		}
 	);
 	let id = 0;
@@ -415,6 +415,20 @@ app.get('/search', (req, res) => {
 			if (err) throw err;
 			return res.send(results);
 		}
+	);
+});
+app.get('/encrypt', (req, res) => {
+	const { q } = req.query;
+	return res.json(
+		CryptoJS.AES.encrypt(q, process.env.RB_COOKIE_KEY).toString()
+	);
+});
+app.get('/decrypt', (req, res) => {
+	const { q } = req.query;
+	return res.json(
+		CryptoJS.AES.decrypt(q, process.env.RB_COOKIE_KEY).toString(
+			CryptoJS.enc.Utf8
+		)
 	);
 });
 app.listen(3300, () => {
