@@ -293,6 +293,26 @@ app.put('/recipes/edit', (req, res) => {
 	);
 });
 
+app.get('bookmark', (req, res) => {});
+// add Bookmark (favorites)
+app.post('/bookmark', (req, res) => {
+	db.query(
+		`INSERT INTO favorites (recipe_id, user_id) VALUES (${req.body.recipeId}, ${req.body.userId})`,
+		(err, result) => {
+			if (err) throw err;
+		}
+	);
+});
+//remove bookmark
+app.put('/bookmark', (req, res) => {
+	db.query(
+		`DELETE FROM favorites where recipe_id = ${req.body.recipeId} and user_id = ${req.body.userId}`,
+		(err, result) => {
+			if (err) throw err;
+		}
+	);
+});
+
 // Accounts
 app.get('/accounts', (req, res) => {
 	db.query('SELECT username, id, email FROM users', (err, results) => {
@@ -371,15 +391,27 @@ app.post('/login', (req, res) => {
 					bcrypt.compare(
 						req.body.password, // incoming password
 						result[0].password, // database hashed password
-						function (error, result2) {
+						function (error, bcryptResult) {
 							if (error) throw error;
-							const user = {
-								username: result[0].username,
-								id: result[0].id,
-								email: result[0].email,
-							};
-							// return to the client the result of the bcrypt compare
-							result2 ? res.json(user) : res.json(false);
+							const favs = [];
+							// grab user favorite recipes
+							db.query(
+								'SELECT recipe_id FROM favorites WHERE user_id = ?',
+								[result[0].id],
+								(err, bookmarkRes) => {
+									for (let i = 0; i < bookmarkRes.length; i++) {
+										favs.push(bookmarkRes[i].recipe_id);
+									}
+									const user = {
+										username: result[0].username,
+										id: result[0].id,
+										email: result[0].email,
+										bookmarks: favs,
+									};
+									// return to the client the result of the bcrypt compare
+									bcryptResult ? res.json(user) : res.json(false);
+								}
+							);
 						}
 					);
 				}
