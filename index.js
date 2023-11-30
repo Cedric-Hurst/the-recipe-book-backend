@@ -3,8 +3,15 @@ import mysql from 'mysql2';
 import cors from 'cors';
 import bcrypt from 'bcrypt';
 import CryptoJS from 'crypto-js';
+import { v2 as cloudinary } from 'cloudinary';
 import 'dotenv/config';
 
+cloudinary.config({
+	cloud_name: 'dn6qbakb9',
+	api_key: process.env.CLOUDINARY_KEY,
+	api_secret: process.env.CLOUDINARY_SECRET,
+	secure: true,
+});
 const app = express();
 const db = mysql.createConnection({
 	host: 'localhost',
@@ -124,6 +131,7 @@ app.post('/recipes/new', (req, res) => {
 		req.body.timing.cookMin,
 		req.body.user_id,
 	];
+
 	db.query(
 		'INSERT INTO recipes (recipeTitle, servings, img, prepHr, prepMin, cookHr, cookMin, user_id) VALUES (?)',
 		[recipeValues],
@@ -467,7 +475,11 @@ app.get('/decrypt', (req, res) => {
 		)
 	);
 });
-
+// delete image from cloudinary
+app.delete('/removeimage', (req, res) => {
+	cloudinary.uploader.destroy(req.query.q).then((res) => console.log(res));
+	return res.json(true);
+});
 app.listen(process.env.PORT, () => {
 	console.log('Backend up and running');
 });
